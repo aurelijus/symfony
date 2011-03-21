@@ -83,14 +83,15 @@ class FrameworkExtension extends Extension
             $container->setParameter('exception_listener.controller', $config['exception_controller']);
         }
 
+        $pattern = '';
         if (isset($config['ide'])) {
             $patterns = array(
                 'textmate' => 'txmt://open?url=file://%%f&line=%%l',
                 'macvim'   => 'mvim://open?url=file://%%f&line=%%l',
             );
             $pattern = isset($patterns[$config['ide']]) ? $patterns[$config['ide']] : $config['ide'];
-            $container->setParameter('debug.file_link_format', $pattern);
         }
+        $container->setParameter('debug.file_link_format', $pattern);
 
         if (!empty($config['test'])) {
             $loader->load('test.xml');
@@ -136,21 +137,28 @@ class FrameworkExtension extends Extension
             'Symfony\\Component\\HttpFoundation\\Response',
             'Symfony\\Component\\HttpFoundation\\ResponseHeaderBag',
 
+            'Symfony\\Component\\EventDispatcher\\EventDispatcherInterface',
+            'Symfony\\Component\\EventDispatcher\\EventDispatcher',
+            'Symfony\\Component\\EventDispatcher\\Event',
+            'Symfony\\Component\\EventDispatcher\\EventSubscriberInterface',
+
             'Symfony\\Component\\HttpKernel\\HttpKernel',
             'Symfony\\Component\\HttpKernel\\ResponseListener',
             'Symfony\\Component\\HttpKernel\\Controller\\ControllerResolver',
             'Symfony\\Component\\HttpKernel\\Controller\\ControllerResolverInterface',
+            'Symfony\\Component\\HttpKernel\\Event\\KernelEvent',
+            'Symfony\\Component\\HttpKernel\\Event\\FilterControllerEvent',
+            'Symfony\\Component\\HttpKernel\\Event\\FilterResponseEvent',
+            'Symfony\\Component\\HttpKernel\\Event\\GetResponseEvent',
+            'Symfony\\Component\\HttpKernel\\Event\\GetResponseForControllerResultEvent',
+            'Symfony\\Component\\HttpKernel\\Event\\GetResponseForExceptionEvent',
+            'Symfony\\Component\\HttpKernel\\Events',
 
             'Symfony\\Bundle\\FrameworkBundle\\RequestListener',
             'Symfony\\Bundle\\FrameworkBundle\\Controller\\ControllerNameParser',
             'Symfony\\Bundle\\FrameworkBundle\\Controller\\ControllerResolver',
             'Symfony\\Bundle\\FrameworkBundle\\Controller\\Controller',
-
-            'Symfony\\Component\\EventDispatcher\\EventInterface',
-            'Symfony\\Component\\EventDispatcher\\Event',
-            'Symfony\\Component\\EventDispatcher\\EventDispatcherInterface',
-            'Symfony\\Component\\EventDispatcher\\EventDispatcher',
-            'Symfony\\Bundle\\FrameworkBundle\\EventDispatcher',
+            'Symfony\\Bundle\\FrameworkBundle\\ContainerAwareEventDispatcher',
         ));
     }
 

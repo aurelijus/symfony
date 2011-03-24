@@ -47,7 +47,7 @@ class DumpCommand extends Command
         $am = $this->container->get('assetic.asset_manager');
 
         // notify an event so custom stream wrappers can be registered lazily
-        $event = new WriteEvent($basePath);
+        $writeEvent = new WriteEvent($basePath);
         $this->container->get('event_dispatcher')->dispatch(Events::onAsseticWrite, $writeEvent);
 
         if ($input->getOption('watch')) {
@@ -153,7 +153,7 @@ class DumpCommand extends Command
         $target = rtrim($basePath, '/') . '/' . $asset->getTargetUrl();
         if (!is_dir($dir = dirname($target))) {
             $output->writeln('<info>[dir+]</info> '.$dir);
-            if (false === @mkdir($dir)) {
+            if (false === @mkdir($dir, 0777, true)) {
                 throw new \RuntimeException('Unable to create directory '.$dir);
             }
         }

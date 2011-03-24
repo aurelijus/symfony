@@ -47,18 +47,14 @@ class PhpMatcherDumper extends MatcherDumper
         ;
     }
 
-    protected function addMatcher()
+    private function addMatcher()
     {
         $code = array();
 
-        foreach ($this->routes->all() as $name => $route) {
+        foreach ($this->getRoutes()->all() as $name => $route) {
             $compiledRoute = $route->compile();
 
             $conditions = array();
-
-            if ($req = $route->getRequirement('_method')) {
-                $conditions[] = sprintf("isset(\$this->context['method']) && preg_match('#^(%s)$#xi', \$this->context['method'])", $req);
-            }
 
             $hasTrailingSlash = false;
             if (!count($compiledRoute->getVariables()) && false !== preg_match('#^(.)\^(?P<url>.*?)\$\1#', $compiledRoute->getRegex(), $m)) {
@@ -90,8 +86,19 @@ class PhpMatcherDumper extends MatcherDumper
             $conditions = implode(' && ', $conditions);
 
             $code[] = <<<EOF
+        // $name
         if ($conditions) {
 EOF;
+
+            if ($req = $route->getRequirement('_method')) {
+                $req = implode('\', \'', array_map('strtolower', explode('|', $req)));
+                $code[] = <<<EOF
+            if (isset(\$this->context['method']) && !in_array(strtolower(\$this->context['method']), array('$req'))) {
+                \$allow = array_merge(\$allow, array('$req'));
+                goto not_$name;
+            }
+EOF;
+            }
 
             if ($hasTrailingSlash) {
                 $code[] = sprintf(<<<EOF
@@ -105,9 +112,16 @@ EOF
             $code[] = sprintf(<<<EOF
             return array_merge(\$this->mergeDefaults($matches, %s), array('_route' => '%s'));
         }
-
 EOF
             , str_replace("\n", '', var_export($compiledRoute->getDefaults(), true)), $name);
+
+            if ($req) {
+                $code[] = <<<EOF
+        not_$name:
+EOF;
+            }
+
+            $code[] = '';
         }
 
         $code = implode("\n", $code);
@@ -116,17 +130,22 @@ EOF
 
     public function match(\$pathinfo)
     {
+        \$allow = array();
+
 $code
-        return false;
+        throw 0 < count(\$allow) ? new MethodNotAllowedException(array_unique(\$allow)) : new NotFoundException();
     }
 
 EOF;
     }
 
-    protected function startClass($class, $baseClass)
+    private function startClass($class, $baseClass)
     {
         return <<<EOF
 <?php
+
+use Symfony\Component\Routing\Matcher\Exception\MethodNotAllowedException;
+use Symfony\Component\Routing\Matcher\Exception\NotFoundException;
 
 /**
  * $class
@@ -140,7 +159,7 @@ class $class extends $baseClass
 EOF;
     }
 
-    protected function addConstructor()
+    private function addConstructor()
     {
         return <<<EOF
     /**
@@ -155,7 +174,7 @@ EOF;
 EOF;
     }
 
-    protected function endClass()
+    private function endClass()
     {
         return <<<EOF
 }

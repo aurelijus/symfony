@@ -6,6 +6,23 @@ one. It only discusses changes that need to be done when using the "public"
 API of the framework. If you "hack" the core, you should probably follow the
 timeline closely anyway.
 
+PR8 to PR10
+-----------
+
+* Namespace for validators has changed from `validation` to `assert` (it was
+  announced for PR9 but it was not the case then):
+
+    Before:
+
+        @validation:NotNull
+
+    After:
+
+        @assert:NotNull
+
+    Moreover, the `Assert` prefix used for some constraints has been removed
+    (`AssertTrue` to `True`).
+
 PR8 to PR9
 ----------
 
@@ -16,8 +33,13 @@ PR8 to PR9
 
 * The HTTP exceptions classes signatures have changed:
 
-    Before: throw new NotFoundHttpException('Not Found', $message, 0, $e);
-    After:  throw new NotFoundHttpException($message, $e);
+    Before:
+
+        throw new NotFoundHttpException('Not Found', $message, 0, $e);
+
+    After:
+
+        throw new NotFoundHttpException($message, $e);
 
 * The RequestMatcher class does not add `^` and `$` anymore to regexp.
 
@@ -37,20 +59,14 @@ PR8 to PR9
   work anyway):
 
     Before:
+
         app/views/base.html.twig
         app/views/AcmeDemoBundle/base.html.twig
 
     After:
+
         app/Resources/views/base.html.twig
         app/Resources/AcmeDemo/views/base.html.twig
-
-* Namespace for validators has changed from `validation` to `assert`:
-
-    Before: @validation:NotNull
-    After:  @assert:NotNull
-
-    Moreover, the `Assert` prefix used for some constraints has been removed
-    (`AssertTrue` to `True`).
 
 * Bundle logical names lose their `Bundle` suffix:
 

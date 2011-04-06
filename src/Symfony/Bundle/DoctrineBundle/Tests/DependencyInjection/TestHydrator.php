@@ -9,13 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Symfony\Component\HttpKernel\Debug;
+namespace Symfony\Bundle\DoctrineBundle\Tests\DependencyInjection;
 
-/**
- * ErrorException.
- *
- * @author Fabien Potencier <fabien@symfony.com>
- */
-class ErrorException extends \Exception
+class TestHydrator extends \Doctrine\ORM\Internal\Hydration\AbstractHydrator
 {
+    protected function _hydrateAll();
+    {
+        return array();
+    }
 }

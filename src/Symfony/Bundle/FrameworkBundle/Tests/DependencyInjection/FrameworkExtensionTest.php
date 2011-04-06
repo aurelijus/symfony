@@ -113,7 +113,12 @@ abstract class FrameworkExtensionTest extends TestCase
 
         $this->assertEquals('templating.engine.delegating', (string) $container->getAlias('templating'), '->registerTemplatingConfiguration() configures delegating loader if multiple engines are provided');
 
-        $this->assertEquals('templating.loader.chain', (string) $container->getAlias('templating.loader'), '->registerTemplatingConfiguration() configures loader chain if multiple loaders are provided');
+        $this->assertEquals($container->getDefinition('templating.loader.chain'), $container->getDefinition('templating.loader.wrapped'), '->registerTemplatingConfiguration() configures loader chain if multiple loaders are provided');
+
+        $this->assertEquals($container->getDefinition('templating.loader'), $container->getDefinition('templating.loader.cache'), '->registerTemplatingConfiguration() configures the loader to use cache');
+
+        $arguments = $container->getDefinition('templating.loader.cache')->getArguments();
+        $this->assertEquals('/path/to/cache', $arguments[1]);
 
         $this->assertEquals(array('php', 'twig'), $container->getParameter('templating.engines'), '->registerTemplatingConfiguration() sets a templating.engines parameter');
     }
@@ -127,7 +132,7 @@ abstract class FrameworkExtensionTest extends TestCase
 
         $this->assertContains(
             realpath(__DIR__.'/../../Resources/translations/validators.fr.xliff'),
-            array_map(function($resource) { return $resource[1]; }, $container->getParameter('translation.resources')),
+            array_map(function($resource) { return realpath($resource[1]); }, $container->getParameter('translation.resources')),
             '->registerTranslatorConfiguration() finds FrameworkExtension translation resources'
         );
 
@@ -161,8 +166,6 @@ abstract class FrameworkExtensionTest extends TestCase
             array_map('realpath', $xmlFiles),
             '->registerValidationConfiguration() adds Form validation.xml to XML loader'
         );
-
-        $this->assertFalse($container->hasDefinition('validator.mapping.loader.annotation_loader'), '->registerValidationConfiguration() does not define the annotation loader unless needed');
     }
 
     public function testValidationAnnotations()
@@ -171,15 +174,15 @@ abstract class FrameworkExtensionTest extends TestCase
 
         $this->assertTrue($container->hasDefinition('validator.mapping.loader.annotation_loader'), '->registerValidationConfiguration() defines the annotation loader');
 
-        $namespaces = $container->getParameter('validator.annotations.namespaces');
-        $this->assertEquals('Symfony\\Component\\Validator\\Constraints\\', $namespaces['assert'], '->registerValidationConfiguration() loads the default "assert" prefix');
-        $this->assertEquals('Application\\Validator\\Constraints\\', $namespaces['app'], '->registerValidationConfiguration() loads custom validation namespaces');
+        $arguments = $container->getDefinition('validator.mapping.loader.annotation_loader')->getArguments();
+        $this->assertEquals('Symfony\\Component\\Validator\\Constraints\\', $arguments[0]['assert'], '->registerValidationConfiguration() loads the default "assert" prefix');
+        $this->assertEquals('Application\\Validator\\Constraints\\', $arguments[0]['app'], '->registerValidationConfiguration() loads custom validation namespaces');
     }
 
     protected function createContainer()
     {
         return new ContainerBuilder(new ParameterBag(array(
-            'kernel.bundles'          => array('Framework' => 'Symfony\\Bundle\\FrameworkBundle\\FrameworkBundle'),
+            'kernel.bundles'          => array('FrameworkBundle' => 'Symfony\\Bundle\\FrameworkBundle\\FrameworkBundle'),
             'kernel.cache_dir'        => __DIR__,
             'kernel.compiled_classes' => array(),
             'kernel.debug'            => false,

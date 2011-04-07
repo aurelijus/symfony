@@ -84,7 +84,9 @@ class FrameworkExtension extends Extension
 
         if (!empty($config['test'])) {
             $loader->load('test.xml');
-            $config['session']['storage_id'] = 'array';
+            if (isset($config['session'])) {
+                $config['session']['storage_id'] = 'array';
+            }
         }
 
         if (isset($config['csrf_protection'])) {
@@ -487,6 +489,15 @@ class FrameworkExtension extends Extension
             $arguments = $loaderChain->getArguments();
             array_unshift($arguments[0], new Reference('validator.mapping.loader.annotation_loader'));
             $loaderChain->setArguments($arguments);
+        }
+
+        if (isset($config['cache'])) {
+            $container->getDefinition('validator.mapping.class_metadata_factory')
+                ->setArgument(1, new Reference('validator.mapping.cache.'.$config['cache']));
+            $container->setParameter(
+                'validator.mapping.cache.prefix',
+                'validator_'.md5($container->getParameter('kernel.root_dir'))
+            );
         }
     }
 

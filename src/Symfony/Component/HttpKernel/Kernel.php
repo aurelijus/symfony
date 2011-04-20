@@ -192,9 +192,9 @@ abstract class Kernel implements KernelInterface
 
         if (true === $first) {
             return $this->bundleMap[$name][0];
-        } elseif (false === $first) {
-            return $this->bundleMap[$name];
         }
+
+        return $this->bundleMap[$name];
     }
 
     /**
@@ -243,6 +243,7 @@ abstract class Kernel implements KernelInterface
         $overridePath = substr($path, 9);
         $resourceBundle = null;
         $bundles = $this->getBundle($bundleName, false);
+        $files = array();
 
         foreach ($bundles as $bundle) {
             if ($isResource && file_exists($file = $dir.'/'.$bundle->getName().$overridePath)) {
@@ -435,6 +436,18 @@ abstract class Kernel implements KernelInterface
     }
 
     /**
+     * Gets the container's base class.
+     *
+     * All names except Container must be fully qualified.
+     *
+     * @return string
+     */
+    protected function getContainerBaseClass()
+    {
+        return 'Container';
+    }
+
+    /**
      * Initializes the service container.
      *
      * The cached version of the service container is used when fresh, otherwise the
@@ -447,7 +460,7 @@ abstract class Kernel implements KernelInterface
         $fresh = true;
         if (!$cache->isFresh()) {
             $container = $this->buildContainer();
-            $this->dumpContainer($cache, $container, $class);
+            $this->dumpContainer($cache, $container, $class, $this->getContainerBaseClass());
 
             $fresh = false;
         }
@@ -555,12 +568,13 @@ abstract class Kernel implements KernelInterface
      * @param ConfigCache       $cache      The config cache
      * @param ContainerBuilder  $container  The service container
      * @param string            $class      The name of the class to generate
+     * @param string            $baseClass  The name of the container's base class
      */
-    protected function dumpContainer(ConfigCache $cache, ContainerBuilder $container, $class)
+    protected function dumpContainer(ConfigCache $cache, ContainerBuilder $container, $class, $baseClass)
     {
         // cache the container
         $dumper = new PhpDumper($container);
-        $content = $dumper->dump(array('class' => $class));
+        $content = $dumper->dump(array('class' => $class, 'base_class' => $baseClass));
         if (!$this->debug) {
             $content = self::stripComments($content);
         }

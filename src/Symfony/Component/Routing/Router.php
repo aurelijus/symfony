@@ -24,12 +24,13 @@ class Router implements RouterInterface
 {
     private $matcher;
     private $generator;
-    private $options;
     private $defaults;
     private $context;
     private $loader;
     private $collection;
     private $resource;
+
+    protected $options;
 
     /**
      * Constructor.
@@ -81,8 +82,43 @@ class Router implements RouterInterface
         }
 
         if ($isInvalid) {
-            throw new \InvalidArgumentException(sprintf('The Router does not support the following options: \'%s\'.', implode('\', \'', $invalid)));
+            throw new \InvalidArgumentException(sprintf('The Router does not support the following options: "%s".', implode('\', \'', $invalid)));
         }
+    }
+
+    /**
+     * Sets an option.
+     *
+     * @param string $key   The key
+     * @param mixed  $value The value
+     *
+     * @throw \InvalidArgumentException
+     */
+    public function setOption($key, $value)
+    {
+        if (!array_key_exists($key, $this->options)) {
+            throw new \InvalidArgumentException(sprintf('The Router does not support the "%s" option.', $key));
+        }
+
+        $this->options[$key] = $value;
+    }
+
+    /**
+     * Gets an option value.
+     *
+     * @param string $key The key
+     *
+     * @return mixed The value
+     *
+     * @throw \InvalidArgumentException
+     */
+    public function getOption($key)
+    {
+        if (!array_key_exists($key, $this->options)) {
+            throw new \InvalidArgumentException(sprintf('The Router does not support the "%s" option.', $key));
+        }
+
+        return $this->options[$key];
     }
 
     /**

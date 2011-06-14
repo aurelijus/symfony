@@ -85,7 +85,7 @@ abstract class AbstractDivLayoutTest extends AbstractLayoutTest
             ->getForm()
             ->createView();
 
-        // Render field2 row -> does not implicitely call renderWidget because
+        // Render field2 row -> does not implicitly call renderWidget because
         // it is a repeated field!
         $this->renderRow($view['field2']);
 
@@ -144,14 +144,11 @@ abstract class AbstractDivLayoutTest extends AbstractLayoutTest
         $html = $this->renderRest($view);
 
         $this->assertMatchesXpath($html,
-'/input
-    [@type="hidden"]
-    [@id="parent__token"]
+'/input[@type="hidden"][@id="parent__token"]
 /following-sibling::div
     [
-        ./label[@for="parent_child1"]
-        /following-sibling::div
-            [@id="parent_child1"]
+        ./label[not(@for)]
+        /following-sibling::div[@id="parent_child1"]
             [
                 ./div
                     [
@@ -160,23 +157,21 @@ abstract class AbstractDivLayoutTest extends AbstractLayoutTest
                     ]
             ]
     ]
+
 /following-sibling::div
     [
-        ./label[@for="parent_child2"]
-        /following-sibling::div
-            [@id="parent_child2"]
+        ./label[not(@for)]
+        /following-sibling::div[@id="parent_child2"]
             [
                 ./div
                     [
                         ./label[@for="parent_child2_field1"]
                         /following-sibling::input[@id="parent_child2_field1"]
                     ]
-                /following-sibling::div
-                    [
-                        ./label[@for="parent_child2_field2"]
-                    ]
             ]
     ]
+    [count(//label)=4]
+    [count(//input[@type="text"])=2]
 '
         );
     }
@@ -373,4 +368,56 @@ abstract class AbstractDivLayoutTest extends AbstractLayoutTest
 '
         );
     }
+
+    public function testSearchInputName()
+    {
+        $form = $this->factory->createNamedBuilder('form', 'full')
+            ->add('name', 'search')
+            ->getForm();
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./input[@type="hidden"][@id="full__token"]
+        /following-sibling::div
+            [
+                ./label[@for="full_name"]
+                /following-sibling::input[@type="search"][@id="full_name"][@name="full[name]"]
+            ]
+    ]
+    [count(//input)=2]
+'
+        );
+    }
+
+    public function testLabelHasNoId()
+    {
+        $form = $this->factory->createNamed('text', 'name');
+        $html = $this->renderRow($form->createView());
+
+        $this->assertMatchesXpath($html,
+'/div
+    [
+        ./label[@for="name"][not(@id)]
+        /following-sibling::input[@id="name"]
+    ]
+'
+        );
+    }
+
+    public function testFileLabelAccessibility()
+    {
+        $form = $this->factory->createNamed('file', 'name');
+        $html = $this->renderRow($form->createView());
+
+        $this->assertMatchesXpath($html,
+'/div
+    [
+        ./label[@for="name"]
+        /following-sibling::input[@id="name"][@type="file"]
+    ]
+'
+        );
+    }
+
 }

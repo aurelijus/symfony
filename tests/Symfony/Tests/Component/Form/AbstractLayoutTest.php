@@ -30,10 +30,9 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 
         $dispatcher = new EventDispatcher();
         $this->csrfProvider = $this->getMock('Symfony\Component\Form\Extension\Csrf\CsrfProvider\CsrfProviderInterface');
-        $storage = new \Symfony\Component\HttpFoundation\File\TemporaryStorage('foo', \sys_get_temp_dir());
 
         $this->factory = new FormFactory(array(
-            new CoreExtension($storage),
+            new CoreExtension(),
             new CsrfExtension($this->csrfProvider),
         ));
     }
@@ -479,6 +478,28 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testSingleChoiceExpandedWithBooleanValue()
+    {
+        $form = $this->factory->createNamed('choice', 'na&me', true, array(
+            'property_path' => 'name',
+            'choices' => array('1' => 'Choice&A', '0' => 'Choice&B'),
+            'multiple' => false,
+            'expanded' => true,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./input[@type="radio"][@name="na&me"][@id="na&me_1"][@checked]
+        /following-sibling::label[@for="na&me_1"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::input[@type="radio"][@name="na&me"][@id="na&me_0"][not(@checked)]
+        /following-sibling::label[@for="na&me_0"][.="[trans]Choice&B[/trans]"]
+    ]
+    [count(./input)=2]
+'
+        );
+    }
+
     public function testMultipleChoiceExpanded()
     {
         $form = $this->factory->createNamed('choice', 'na&me', array('&a', '&c'), array(
@@ -732,14 +753,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         ));
 
         $this->assertWidgetMatchesXpath($form->createView(), array(),
-'/div
-    [
-        ./input[@type="file"][@id="na&me_file"]
-        /following-sibling::input[@type="hidden"][@id="na&me_token"]
-        /following-sibling::input[@type="hidden"][@id="na&me_name"]
-        /following-sibling::input[@type="hidden"][@id="na&me_originalName"]
-    ]
-    [count(./input)=4]
+'/input
+    [@type="file"]
 '
         );
     }
@@ -1097,6 +1112,23 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@type="url"]
     [@name="na&me"]
     [@value="http://www.google.com?foo1=bar1&foo2=bar2"]
+'
+        );
+    }
+
+    public function testCollectionPrototype()
+    {
+        $form = $this->factory->createNamedBuilder('form', 'na&me', array('items' => array('one', 'two', 'three')))
+            ->add('items', 'collection', array('allow_add' => true))
+            ->getForm()
+            ->createView();
+
+        $html = $this->renderWidget($form);
+
+        $this->assertMatchesXpath($html,
+'//script
+    [@id="na&me_items_prototype"]
+    [@type="text/html"]
 '
         );
     }

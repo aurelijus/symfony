@@ -43,7 +43,7 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('bar', $request->request->get('foo'), '->initialize() takes an array of request parameters as its second argument');
 
         $request->initialize(array(), array(), array('foo' => 'bar'));
-        $this->assertEquals('bar', $request->attributes->get('foo'), '->initialize() takes an array of attributes as its thrid argument');
+        $this->assertEquals('bar', $request->attributes->get('foo'), '->initialize() takes an array of attributes as its third argument');
 
         $request->initialize(array(), array(), array(), array(), array(), array('HTTP_FOO' => 'bar'));
         $this->assertEquals('bar', $request->headers->get('FOO'), '->initialize() takes an array of HTTP headers as its fourth argument');
@@ -144,6 +144,15 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         foreach ($mimeTypes as $mime) {
             $this->assertEquals($format, $request->getFormat($mime));
         }
+    }
+
+    /**
+     * @covers Symfony\Component\HttpFoundation\Request::getFormat
+     */
+    public function testGetFormatFromMimeTypeWithParameters()
+    {
+        $request = new Request();
+        $this->assertEquals('json', $request->getFormat('application/json; charset=utf-8'));
     }
 
     /**
@@ -453,11 +462,11 @@ class RequestTest extends \PHPUnit_Framework_TestCase
         $request->setMethod('POST');
         $request->request->set('_method', 'purge');
         $this->assertEquals('PURGE', $request->getMethod(), '->getMethod() returns the method from _method if defined and POST');
-        
+
         $request->setMethod('POST');
         $request->server->set('X-HTTP-METHOD-OVERRIDE', 'delete');
         $this->assertEquals('DELETE', $request->getMethod(), '->getMethod() returns the method from X-HTTP-Method-Override even though _method is set if defined and POST');
-        
+
         $request = new Request();
         $request->setMethod('POST');
         $request->server->set('X-HTTP-METHOD-OVERRIDE', 'delete');

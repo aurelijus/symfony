@@ -32,7 +32,7 @@ class FormExtensionDivLayoutTest extends AbstractDivLayoutTest
         parent::setUp();
 
         $loader = new StubFilesystemLoader(array(
-            __DIR__.'/../../../../../../src/Symfony/Bundle/TwigBundle/Resources/views/Form',
+            __DIR__.'/../../../../../../src/Symfony/Bridge/Twig/Resources/views/Form',
             __DIR__,
         ));
 
@@ -46,6 +46,93 @@ class FormExtensionDivLayoutTest extends AbstractDivLayoutTest
         $environment->addExtension(new TranslationExtension(new StubTranslator()));
 
         $this->extension->initRuntime($environment);
+    }
+
+    public function testThemeBlockInheritance()
+    {
+        $view = $this->factory
+            ->createNamed('email', 'name')
+            ->createView()
+        ;
+
+        $this->extension->setTheme($view, array('theme.html.twig'));
+
+        $this->assertMatchesXpath(
+            $this->renderWidget($view),
+            '/input[@type="email"][@rel="theme"]'
+        );
+    }
+
+    public function testThemeBlockInheritanceUsingUse()
+    {
+        $view = $this->factory
+            ->createNamed('email', 'name')
+            ->createView()
+        ;
+
+        $this->extension->setTheme($view, array('theme_use.html.twig'));
+
+        $this->assertMatchesXpath(
+            $this->renderWidget($view),
+            '/input[@type="email"][@rel="theme"]'
+        );
+    }
+
+    public function testThemeBlockInheritanceUsingExtend()
+    {
+        $view = $this->factory
+            ->createNamed('email', 'name')
+            ->createView()
+        ;
+
+        $this->extension->setTheme($view, array('theme_extends.html.twig'));
+
+        $this->assertMatchesXpath(
+            $this->renderWidget($view),
+            '/input[@type="email"][@rel="theme"]'
+        );
+    }
+
+    public function testThemeInheritance()
+    {
+        $child = $this->factory->createNamedBuilder('form', 'child')
+            ->add('field', 'text')
+            ->getForm();
+
+        $view = $this->factory->createNamedBuilder('form', 'parent')
+            ->add('field', 'text')
+            ->getForm()
+            ->add($child)
+            ->createView()
+        ;
+
+        $this->extension->setTheme($view, array('parent_label.html.twig'));
+        $this->extension->setTheme($view['child'], array('child_label.html.twig'));
+
+        $this->assertWidgetMatchesXpath($view, array(),
+'/div
+    [
+        ./input[@type="hidden"]
+        /following-sibling::div
+            [
+                ./label[.="parent"]
+                /following-sibling::input[@type="text"]
+            ]
+        /following-sibling::div
+            [
+                ./label
+                /following-sibling::div
+                    [
+                        ./div
+                            [
+                                ./label[.="child"]
+                                /following-sibling::input[@type="text"]
+                            ]
+                    ]
+            ]
+    ]
+'
+        );
     }
 
     protected function renderEnctype(FormView $view)

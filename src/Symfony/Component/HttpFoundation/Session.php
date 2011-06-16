@@ -21,9 +21,11 @@ use Symfony\Component\HttpFoundation\SessionStorage\SessionStorageInterface;
 class Session implements \Serializable
 {
     protected $storage;
-    protected $attributes;
-    protected $oldFlashes;
     protected $started;
+    protected $attributes;
+    protected $flashes;
+    protected $oldFlashes;
+    protected $locale;
     protected $defaultLocale;
 
     /**
@@ -36,7 +38,11 @@ class Session implements \Serializable
     {
         $this->storage = $storage;
         $this->defaultLocale = $defaultLocale;
-        $this->attributes = array('_flash' => array(), '_locale' => $this->defaultLocale);
+        $this->locale = $defaultLocale;
+        $this->flashes = array();
+        $this->oldFlashes = array();
+        $this->attributes = array();
+        $this->setPhpDefaultLocale($this->defaultLocale);
         $this->started = false;
     }
 
@@ -51,18 +57,17 @@ class Session implements \Serializable
 
         $this->storage->start();
 
-        $this->attributes = $this->storage->read('_symfony2');
+        $attributes = $this->storage->read('_symfony2');
 
-        if (!isset($this->attributes['_flash'])) {
-            $this->attributes['_flash'] = array();
+        if (isset($attributes['attributes'])) {
+            $this->attributes = $attributes['attributes'];
+            $this->flashes = $attributes['flashes'];
+            $this->locale = $attributes['locale'];
+            $this->setPhpDefaultLocale($this->locale);
+
+            // flag current flash messages to be removed at shutdown
+            $this->oldFlashes = array_flip(array_keys($this->flashes));
         }
-
-        if (!isset($this->attributes['_locale'])) {
-            $this->attributes['_locale'] = $this->defaultLocale;
-        }
-
-        // flag current flash messages to be removed at shutdown
-        $this->oldFlashes = array_flip(array_keys($this->attributes['_flash']));
 
         $this->started = true;
     }
@@ -157,6 +162,8 @@ class Session implements \Serializable
         }
 
         $this->attributes = array();
+        $this->flashes = array();
+        $this->setPhpDefaultLocale($this->locale = $this->defaultLocale);
     }
 
     /**
@@ -184,6 +191,10 @@ class Session implements \Serializable
      */
     public function getId()
     {
+        if (false === $this->started) {
+            $this->start();
+        }
+
         return $this->storage->getId();
     }
 
@@ -194,11 +205,7 @@ class Session implements \Serializable
      */
     public function getLocale()
     {
-        if (!isset($this->attributes['_locale'])) {
-            $this->attributes['_locale'] = $this->defaultLocale;
-        }
-
-        return $this->attributes['_locale'];
+        return $this->locale;
     }
 
     /**
@@ -212,7 +219,7 @@ class Session implements \Serializable
             $this->start();
         }
 
-        $this->attributes['_locale'] = $locale;
+        $this->setPhpDefaultLocale($this->locale = $locale);
     }
 
     /**
@@ -222,7 +229,7 @@ class Session implements \Serializable
      */
     public function getFlashes()
     {
-        return isset($this->attributes['_flash']) ? $this->attributes['_flash'] : array();
+        return $this->flashes;
     }
 
     /**
@@ -236,7 +243,7 @@ class Session implements \Serializable
             $this->start();
         }
 
-        $this->attributes['_flash'] = $values;
+        $this->flashes = $values;
         $this->oldFlashes = array();
     }
 
@@ -250,7 +257,7 @@ class Session implements \Serializable
      */
     public function getFlash($name, $default = null)
     {
-        return array_key_exists($name, $this->getFlashes()) ? $this->attributes['_flash'][$name] : $default;
+        return array_key_exists($name, $this->flashes) ? $this->flashes[$name] : $default;
     }
 
     /**
@@ -265,7 +272,7 @@ class Session implements \Serializable
             $this->start();
         }
 
-        $this->attributes['_flash'][$name] = $value;
+        $this->flashes[$name] = $value;
         unset($this->oldFlashes[$name]);
     }
 
@@ -282,7 +289,7 @@ class Session implements \Serializable
             $this->start();
         }
 
-        return array_key_exists($name, $this->attributes['_flash']);
+        return array_key_exists($name, $this->flashes);
     }
 
     /**
@@ -296,7 +303,7 @@ class Session implements \Serializable
             $this->start();
         }
 
-        unset($this->attributes['_flash'][$name]);
+        unset($this->flashes[$name]);
     }
 
     /**
@@ -308,7 +315,7 @@ class Session implements \Serializable
             $this->start();
         }
 
-        $this->attributes['_flash'] = array();
+        $this->flashes = array();
         $this->oldFlashes = array();
     }
 
@@ -318,10 +325,13 @@ class Session implements \Serializable
             $this->start();
         }
 
-        if (isset($this->attributes['_flash'])) {
-            $this->attributes['_flash'] = array_diff_key($this->attributes['_flash'], $this->oldFlashes);
-        }
-        $this->storage->write('_symfony2', $this->attributes);
+        $this->flashes = array_diff_key($this->flashes, $this->oldFlashes);
+
+        $this->storage->write('_symfony2', array(
+            'attributes' => $this->attributes,
+            'flashes'    => $this->flashes,
+            'locale'     => $this->locale,
+        ));
     }
 
     public function __destruct()
@@ -341,5 +351,14 @@ class Session implements \Serializable
         list($this->storage, $this->defaultLocale) = unserialize($serialized);
         $this->attributes = array();
         $this->started = false;
+    }
+
+    private function setPhpDefaultLocale($locale)
+    {
+        try {
+            \Locale::setDefault($this->locale);
+        } catch (\Exception $e) {
+            // means that intl is not installed.
+        }
     }
 }

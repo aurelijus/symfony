@@ -13,17 +13,12 @@ namespace Symfony\Tests\Component\Yaml;
 
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Parser;
-use Symfony\Component\Yaml\ParserException;
+use Symfony\Component\Yaml\Exception\ParseException;
 
 class ParserTest extends \PHPUnit_Framework_TestCase
 {
     protected $parser;
     protected $path;
-
-    static public function setUpBeforeClass()
-    {
-        Yaml::setSpecVersion('1.1');
-    }
 
     protected function setUp()
     {
@@ -85,7 +80,7 @@ class ParserTest extends \PHPUnit_Framework_TestCase
                 $this->fail('YAML files must not contain tabs');
             } catch (\Exception $e) {
                 $this->assertInstanceOf('\Exception', $e, 'YAML files must not contain tabs');
-                $this->assertEquals('A YAML file cannot contain tabs as indentation at line 2 ('.strpbrk($yaml, "\t").').', $e->getMessage(), 'YAML files must not contain tabs');
+                $this->assertEquals('A YAML file cannot contain tabs as indentation at line 2 (near "'.strpbrk($yaml, "\t").'").', $e->getMessage(), 'YAML files must not contain tabs');
             }
         }
     }
@@ -131,7 +126,7 @@ EOF
 
                 $this->fail('charsets other than UTF-8 are rejected.');
             } catch (\Exception $e) {
-                 $this->assertInstanceOf('Symfony\Component\Yaml\ParserException', $e, 'charsets other than UTF-8 are rejected.');
+                 $this->assertInstanceOf('Symfony\Component\Yaml\Exception\ParseException', $e, 'charsets other than UTF-8 are rejected.');
             }
         }
     }

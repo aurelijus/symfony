@@ -72,14 +72,50 @@ EOF;
     private function compileRoutes(RouteCollection $routes, $supportsRedirections, $parentPrefix = null)
     {
         $code = array();
-        foreach ($routes as $name => $route) {
+
+        $routes = clone $routes;
+        $routeIterator = $routes->getIterator();
+        $keys = array_keys($routeIterator->getArrayCopy());
+        $keysCount = count($keys);
+
+        $i = 0;
+        foreach ($routeIterator as $name => $route) {
+            $i++;
+
+            $route = clone $route;
             if ($route instanceof RouteCollection) {
                 $prefix = $route->getPrefix();
                 $optimizable = $prefix && count($route->all()) > 1 && false === strpos($route->getPrefix(), '{');
                 $indent = '';
                 if ($optimizable) {
-                    $code[] = sprintf("        if (0 === strpos(\$pathinfo, '%s')) {", $prefix);
-                    $indent = '    ';
+                    for ($j = $i; $j < $keysCount; $j++) {
+                        if ($keys[$j] === null) {
+                          continue;
+                        }
+
+                        $testRoute = $routeIterator->offsetGet($keys[$j]);
+                        $isCollection = ($testRoute instanceof RouteCollection);
+
+                        $testPrefix = $isCollection ? $testRoute->getPrefix() : $testRoute->getPattern();
+
+                        if (0 === strpos($testPrefix, $prefix)) {
+                            $routeIterator->offsetUnset($keys[$j]);
+
+                            if ($isCollection) {
+                                $route->addCollection($testRoute);
+                            } else {
+                                $route->add($keys[$j], $testRoute);
+                            }
+
+                            $i++;
+                            $keys[$j] = null;
+                        }
+                    }
+
+                    if ($prefix !== $parentPrefix) {
+                        $code[] = sprintf("        if (0 === strpos(\$pathinfo, '%s')) {", $prefix);
+                        $indent = '    ';
+                    }
                 }
 
                 foreach ($this->compileRoutes($route, $supportsRedirections, $prefix) as $line) {
@@ -88,7 +124,8 @@ EOF;
                     }
                 }
 
-                if ($optimizable) {
+                if ($optimizable && $prefix !== $parentPrefix) {
+                    $code[] = "            throw 0 < count(\$allow) ? new MethodNotAllowedException(array_unique(\$allow)) : new ResourceNotFoundException();";
                     $code[] = "        }\n";
                 }
             } else {

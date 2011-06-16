@@ -9,6 +9,13 @@ timeline closely anyway.
 beta4 to beta5
 --------------
 
+* `UserProviderInterface::loadUser()` has been renamed to
+  `UserProviderInterface::refreshUser()` to make the goal of the method
+  clearer.
+
+* The `$kernel` property on `WebTestCase` is now static. Change any instances
+  of `$this->kernel` in your functional tests to `self::$kernel`.
+
 * The AsseticBundle has been moved to its own repository (it still bundled
   with Symfony SE).
 
@@ -83,7 +90,7 @@ beta4 to beta5
 
     After:
 
-        `div_layout.html.twig`
+        `form_div_layout.html.twig`
 
 * All settings regarding the cache warmers have been removed.
 

@@ -37,7 +37,7 @@ class FormExtensionDivLayoutTest extends AbstractDivLayoutTest
         ));
 
         $this->extension = new FormExtension(array(
-            'div_layout.html.twig',
+            'form_div_layout.html.twig',
             'custom_widgets.html.twig',
         ));
 
@@ -46,6 +46,13 @@ class FormExtensionDivLayoutTest extends AbstractDivLayoutTest
         $environment->addExtension(new TranslationExtension(new StubTranslator()));
 
         $this->extension->initRuntime($environment);
+    }
+
+    protected function tearDown()
+    {
+        parent::tearDown();
+
+        $this->extension = null;
     }
 
     public function testThemeBlockInheritance()

@@ -37,7 +37,7 @@ class FormExtensionTableLayoutTest extends AbstractTableLayoutTest
         ));
 
         $this->extension = new FormExtension(array(
-            'table_layout.html.twig',
+            'form_table_layout.html.twig',
             'custom_widgets.html.twig',
         ));
 
@@ -46,6 +46,13 @@ class FormExtensionTableLayoutTest extends AbstractTableLayoutTest
         $environment->addExtension(new TranslationExtension(new StubTranslator()));
 
         $this->extension->initRuntime($environment);
+    }
+
+    protected function tearDown()
+    {
+        parent::tearDown();
+
+        $this->extension = null;
     }
 
     protected function renderEnctype(FormView $view)

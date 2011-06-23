@@ -226,7 +226,8 @@ abstract class AbstractDoctrineExtensionTest extends TestCase
                 'driverOptions' => array(),
             ),
             new Reference('doctrine.dbal.default_connection.configuration'),
-            new Reference('doctrine.dbal.default_connection.event_manager')
+            new Reference('doctrine.dbal.default_connection.event_manager'),
+            array(),
         ));
 
         $definition = $container->getDefinition('doctrine.orm.default_entity_manager');
@@ -265,7 +266,8 @@ abstract class AbstractDoctrineExtensionTest extends TestCase
                 'logging' => false,
             ),
             new Reference('doctrine.dbal.default_connection.configuration'),
-            new Reference('doctrine.dbal.default_connection.event_manager')
+            new Reference('doctrine.dbal.default_connection.event_manager'),
+            array(),
         ));
 
         $definition = $container->getDefinition('doctrine.orm.default_entity_manager');
@@ -687,7 +689,7 @@ abstract class AbstractDoctrineExtensionTest extends TestCase
             'kernel.debug'       => false,
             'kernel.bundles'     => $map,
             'kernel.cache_dir'   => sys_get_temp_dir(),
-            'kernel.root_dir'    => __DIR__ . "/../../../../../" // src dir
+            'kernel.root_dir'    => __DIR__ . '/../../../../../' // src dir
         )));
     }
 
@@ -699,7 +701,7 @@ abstract class AbstractDoctrineExtensionTest extends TestCase
      */
     protected function assertDICDefinitionClass($definition, $expectedClass)
     {
-        $this->assertEquals($expectedClass, $definition->getClass(), "Expected Class of the DIC Container Service Definition is wrong.");
+        $this->assertEquals($expectedClass, $definition->getClass(), 'Expected Class of the DIC Container Service Definition is wrong.');
     }
 
     protected function assertDICConstructorArguments($definition, $args)

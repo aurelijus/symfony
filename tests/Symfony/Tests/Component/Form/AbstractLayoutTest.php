@@ -107,6 +107,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 
     abstract protected function renderRest(FormView $view, array $vars = array());
 
+    abstract protected function setTheme(FormView $view, array $themes);
+
     public function testEnctype()
     {
         $form = $this->factory->createNamedBuilder('form', 'na&me', null, array(
@@ -330,6 +332,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/select
     [@name="na&me"]
+    [@required="required"]
     [
         ./option[@value="&a"][@selected="selected"][.="Choice&A"]
         /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
@@ -352,6 +355,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertWidgetMatchesXpath($form->createView(), array('separator' => '-- sep --'),
 '/select
     [@name="na&me"]
+    [@required="required"]
     [
         ./option[@value="&b"][not(@selected)][.="Choice&B"]
         /following-sibling::option[@disabled="disabled"][not(@selected)][.="-- sep --"]
@@ -375,8 +379,58 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/select
     [@name="na&me"]
+    [not(@required)]
     [
         ./option[@value=""][.="[trans][/trans]"]
+        /following-sibling::option[@value="&a"][@selected="selected"][.="Choice&A"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+    ]
+    [count(./option)=3]
+'
+        );
+    }
+
+    public function testSingleChoiceNonRequiredNoneSelected()
+    {
+        $form = $this->factory->createNamed('choice', 'na&me', null, array(
+            'property_path' => 'name',
+            'choices' => array('&a' => 'Choice&A', '&b' => 'Choice&B'),
+            'required' => false,
+            'multiple' => false,
+            'expanded' => false,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/select
+    [@name="na&me"]
+    [not(@required)]
+    [
+        ./option[@value=""][.="[trans][/trans]"]
+        /following-sibling::option[@value="&a"][not(@selected)][.="Choice&A"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+    ]
+    [count(./option)=3]
+'
+        );
+    }
+
+    public function testSingleChoiceWithNonRequiredEmptyValue()
+    {
+        $form = $this->factory->createNamed('choice', 'na&me', '&a', array(
+            'property_path' => 'name',
+            'choices' => array('&a' => 'Choice&A', '&b' => 'Choice&B'),
+            'multiple' => false,
+            'expanded' => false,
+            'required' => false,
+            'empty_value' => 'Select&Anything&Not&Me',
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/select
+    [@name="na&me"]
+    [not(@required)]
+    [
+        ./option[@value=""][not(@selected)][.="[trans]Select&Anything&Not&Me[/trans]"]
         /following-sibling::option[@value="&a"][@selected="selected"][.="Choice&A"]
         /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
     ]
@@ -393,11 +447,37 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
             'required' => true,
             'multiple' => false,
             'expanded' => false,
+            'empty_value' => 'Test&Me'
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/select
+    [@name="na&me"]
+    [@required="required"]
+    [
+        ./option[@value=""][.="[trans]Test&Me[/trans]"]
+        /following-sibling::option[@value="&a"][@selected="selected"][.="Choice&A"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+    ]
+    [count(./option)=3]
+'
+        );
+    }
+
+    public function testSingleChoiceRequiredWithEmptyValueViaView()
+    {
+        $form = $this->factory->createNamed('choice', 'na&me', '&a', array(
+            'property_path' => 'name',
+            'choices' => array('&a' => 'Choice&A', '&b' => 'Choice&B'),
+            'required' => true,
+            'multiple' => false,
+            'expanded' => false,
         ));
 
         $this->assertWidgetMatchesXpath($form->createView(), array('empty_value' => ''),
 '/select
     [@name="na&me"]
+    [@required="required"]
     [
         ./option[@value=""][.="[trans][/trans]"]
         /following-sibling::option[@value="&a"][@selected="selected"][.="Choice&A"]
@@ -461,6 +541,29 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testMultipleChoiceSkipEmptyValue()
+    {
+        $form = $this->factory->createNamed('choice', 'na&me', array('&a'), array(
+            'property_path' => 'name',
+            'choices' => array('&a' => 'Choice&A', '&b' => 'Choice&B'),
+            'multiple' => true,
+            'expanded' => false,
+            'empty_value' => 'Test&Me'
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/select
+    [@name="na&me[]"]
+    [@multiple="multiple"]
+    [
+        ./option[@value="&a"][@selected="selected"][.="Choice&A"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+    ]
+    [count(./option)=2]
+'
+        );
+    }
+
     public function testMultipleChoiceNonRequired()
     {
         $form = $this->factory->createNamed('choice', 'na&me', array('&a'), array(
@@ -491,6 +594,29 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
             'choices' => array('&a' => 'Choice&A', '&b' => 'Choice&B'),
             'multiple' => false,
             'expanded' => true,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./input[@type="radio"][@name="na&me"][@id="na&me_&a"][@checked]
+        /following-sibling::label[@for="na&me_&a"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::input[@type="radio"][@name="na&me"][@id="na&me_&b"][not(@checked)]
+        /following-sibling::label[@for="na&me_&b"][.="[trans]Choice&B[/trans]"]
+    ]
+    [count(./input)=2]
+'
+        );
+    }
+
+    public function testSingleChoiceExpandedSkipEmptyValue()
+    {
+        $form = $this->factory->createNamed('choice', 'na&me', '&a', array(
+            'property_path' => 'name',
+            'choices' => array('&a' => 'Choice&A', '&b' => 'Choice&B'),
+            'multiple' => false,
+            'expanded' => true,
+            'empty_value' => 'Test&Me'
         ));
 
         $this->assertWidgetMatchesXpath($form->createView(), array(),
@@ -568,6 +694,24 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testCountryWithEmptyValue()
+    {
+        $form = $this->factory->createNamed('country', 'na&me', 'AT', array(
+            'property_path' => 'name',
+            'empty_value' => 'Select&Country',
+            'required' => false,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/select
+    [@name="na&me"]
+    [./option[@value=""][not(@selected)][.="[trans]Select&Country[/trans]"]]
+    [./option[@value="AT"][@selected="selected"][.="Austria"]]
+    [count(./option)>201]
+'
+        );
+    }
+
     public function testCsrf()
     {
         $this->csrfProvider->expects($this->any())
@@ -619,6 +763,87 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
                 /following-sibling::select
                     [@id="na&me_time_minute"]
                     [./option[@value="5"][@selected="selected"]]
+            ]
+    ]
+    [count(.//select)=5]
+'
+        );
+    }
+
+    public function testDateTimeWithEmptyValueGlobal()
+    {
+        $form = $this->factory->createNamed('datetime', 'na&me', null, array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'empty_value' => 'Change&Me',
+            'required' => false,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./div
+            [@id="na&me_date"]
+            [
+                ./select
+                    [@id="na&me_date_month"]
+                    [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+                /following-sibling::select
+                    [@id="na&me_date_day"]
+                    [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+                /following-sibling::select
+                    [@id="na&me_date_year"]
+                    [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+            ]
+        /following-sibling::div
+            [@id="na&me_time"]
+            [
+                ./select
+                    [@id="na&me_time_hour"]
+                    [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+                /following-sibling::select
+                    [@id="na&me_time_minute"]
+                    [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+            ]
+    ]
+    [count(.//select)=5]
+'
+        );
+    }
+    public function testDateTimeWithEmptyValueOnTime()
+    {
+        $form = $this->factory->createNamed('datetime', 'na&me', '2011-02-03', array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'empty_value' => array('hour' => 'Change&Me', 'minute' => 'Change&Me'),
+            'required' => false,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./div
+            [@id="na&me_date"]
+            [
+                ./select
+                    [@id="na&me_date_month"]
+                    [./option[@value="2"][@selected="selected"]]
+                /following-sibling::select
+                    [@id="na&me_date_day"]
+                    [./option[@value="3"][@selected="selected"]]
+                /following-sibling::select
+                    [@id="na&me_date_year"]
+                    [./option[@value="2011"][@selected="selected"]]
+            ]
+        /following-sibling::div
+            [@id="na&me_time"]
+            [
+                ./select
+                    [@id="na&me_time_hour"]
+                    [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+                /following-sibling::select
+                    [@id="na&me_time_minute"]
+                    [./option[@value=""][.="[trans]Change&Me[/trans]"]]
             ]
     ]
     [count(.//select)=5]
@@ -695,6 +920,62 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testDateChoiceWithEmptyValueGlobal()
+    {
+        $form = $this->factory->createNamed('date', 'na&me', null, array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'widget' => 'choice',
+            'empty_value' => 'Change&Me',
+            'required' => false,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./select
+            [@id="na&me_month"]
+            [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+        /following-sibling::select
+            [@id="na&me_day"]
+            [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+        /following-sibling::select
+            [@id="na&me_year"]
+            [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+    ]
+    [count(./select)=3]
+'
+        );
+    }
+
+    public function testDateChoiceWithEmptyValueOnYear()
+    {
+        $form = $this->factory->createNamed('date', 'na&me', null, array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'widget' => 'choice',
+            'required' => false,
+            'empty_value' => array('year' => 'Change&Me'),
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./select
+            [@id="na&me_month"]
+            [./option[@value="1"]]
+        /following-sibling::select
+            [@id="na&me_day"]
+            [./option[@value="1"]]
+        /following-sibling::select
+            [@id="na&me_year"]
+            [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+    ]
+    [count(./select)=3]
+'
+        );
+    }
+
     public function testDateText()
     {
         $form = $this->factory->createNamed('date', 'na&me', '2011-02-03', array(
@@ -737,6 +1018,61 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@type="text"]
     [@name="na&me"]
     [@value="Feb 3, 2011"]
+'
+        );
+    }
+
+    public function testBirthDay()
+    {
+        $form = $this->factory->createNamed('birthday', 'na&me', '2000-02-03', array(
+            'property_path' => 'name',
+            'input' => 'string',
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./select
+            [@id="na&me_month"]
+            [./option[@value="2"][@selected="selected"]]
+        /following-sibling::select
+            [@id="na&me_day"]
+            [./option[@value="3"][@selected="selected"]]
+        /following-sibling::select
+            [@id="na&me_year"]
+            [./option[@value="2000"][@selected="selected"]]
+    ]
+    [count(./select)=3]
+'
+        );
+    }
+
+    public function testBirthDayWithEmptyValue()
+    {
+        $form = $this->factory->createNamed('birthday', 'na&me', '1950-01-01', array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'empty_value' => '',
+            'required' => false,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./select
+            [@id="na&me_month"]
+            [./option[@value=""][.="[trans][/trans]"]]
+            [./option[@value="1"][@selected="selected"]]
+        /following-sibling::select
+            [@id="na&me_day"]
+            [./option[@value=""][.="[trans][/trans]"]]
+            [./option[@value="1"][@selected="selected"]]
+        /following-sibling::select
+            [@id="na&me_year"]
+            [./option[@value=""][.="[trans][/trans]"]]
+            [./option[@value="1950"][@selected="selected"]]
+    ]
+    [count(./select)=3]
 '
         );
     }
@@ -1095,16 +1431,71 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
             [@id="na&me_hour"]
             [@size="1"]
             [./option[@value="4"][@selected="selected"]]
+            [count(./option)>23]
         /following-sibling::select
             [@id="na&me_minute"]
             [@size="1"]
             [./option[@value="5"][@selected="selected"]]
+            [count(./option)>59]
         /following-sibling::select
             [@id="na&me_second"]
             [@size="1"]
             [./option[@value="6"][@selected="selected"]]
+            [count(./option)>59]
     ]
     [count(./select)=3]
+'
+        );
+    }
+
+    public function testTimeWithEmptyValueGlobal()
+    {
+        $form = $this->factory->createNamed('time', 'na&me', null, array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'empty_value' => 'Change&Me',
+            'required' => false,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./select
+            [@id="na&me_hour"]
+            [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+            [count(./option)>24]
+        /following-sibling::select
+            [@id="na&me_minute"]
+            [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+            [count(./option)>60]
+    ]
+    [count(./select)=2]
+'
+        );
+    }
+
+    public function testTimeWithEmptyValueOnYear()
+    {
+        $form = $this->factory->createNamed('time', 'na&me', null, array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'required' => false,
+            'empty_value' => array('hour' => 'Change&Me'),
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./select
+            [@id="na&me_hour"]
+            [./option[@value=""][.="[trans]Change&Me[/trans]"]]
+            [count(./option)>24]
+        /following-sibling::select
+            [@id="na&me_minute"]
+            [./option[@value="1"]]
+            [count(./option)>59]
+    ]
+    [count(./select)=2]
 '
         );
     }
@@ -1118,12 +1509,30 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/select
     [@name="na&me"]
+    [@required="required"]
     [./optgroup
         [@label="Europe"]
         [./option[@value="Europe/Vienna"][@selected="selected"][.="Vienna"]]
     ]
     [count(./optgroup)>10]
     [count(.//option)>200]
+'
+        );
+    }
+
+    public function testTimezoneWithEmptyValue()
+    {
+        $form = $this->factory->createNamed('timezone', 'na&me', null, array(
+            'property_path' => 'name',
+            'empty_value' => 'Select&Timezone',
+            'required' => false,
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/select
+    [./option[@value=""][.="[trans]Select&Timezone[/trans]"]]
+    [count(./optgroup)>10]
+    [count(.//option)>201]
 '
         );
     }

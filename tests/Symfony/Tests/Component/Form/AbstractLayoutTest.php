@@ -148,6 +148,23 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testLabelOnForm()
+    {
+        $form = $this->factory->createNamed('date', 'na&me', null, array(
+            'property_path' => 'name',
+        ));
+        $view = $form->createView();
+        $this->renderWidget($view, array('label' => 'foo'));
+        $html = $this->renderLabel($view);
+
+        $this->assertMatchesXpath($html,
+'/label
+    [@class=" required"]
+    [.="[trans]Na&me[/trans]"]
+'
+        );
+    }
+
     public function testLabelWithCustomTextPassedAsOption()
     {
         $form = $this->factory->createNamed('text', 'na&me', null, array(
@@ -209,7 +226,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertMatchesXpath($html,
 '/label
     [@for="na&me"]
-    [@class="my&class"]
+    [@class="my&class required"]
 '
         );
     }
@@ -228,7 +245,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertMatchesXpath($html,
 '/label
     [@for="na&me"]
-    [@class="my&class"]
+    [@class="my&class required"]
     [.="[trans]Custom label[/trans]"]
 '
         );
@@ -334,8 +351,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@name="na&me"]
     [@required="required"]
     [
-        ./option[@value="&a"][@selected="selected"][.="Choice&A"]
-        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+        ./option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
     ]
     [count(./option)=2]
 '
@@ -357,9 +374,9 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@name="na&me"]
     [@required="required"]
     [
-        ./option[@value="&b"][not(@selected)][.="Choice&B"]
+        ./option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
         /following-sibling::option[@disabled="disabled"][not(@selected)][.="-- sep --"]
-        /following-sibling::option[@value="&a"][@selected="selected"][.="Choice&A"]
+        /following-sibling::option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
     ]
     [count(./option)=3]
 '
@@ -382,8 +399,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [not(@required)]
     [
         ./option[@value=""][.="[trans][/trans]"]
-        /following-sibling::option[@value="&a"][@selected="selected"][.="Choice&A"]
-        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+        /following-sibling::option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
     ]
     [count(./option)=3]
 '
@@ -406,8 +423,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [not(@required)]
     [
         ./option[@value=""][.="[trans][/trans]"]
-        /following-sibling::option[@value="&a"][not(@selected)][.="Choice&A"]
-        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+        /following-sibling::option[@value="&a"][not(@selected)][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
     ]
     [count(./option)=3]
 '
@@ -431,8 +448,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [not(@required)]
     [
         ./option[@value=""][not(@selected)][.="[trans]Select&Anything&Not&Me[/trans]"]
-        /following-sibling::option[@value="&a"][@selected="selected"][.="Choice&A"]
-        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+        /following-sibling::option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
     ]
     [count(./option)=3]
 '
@@ -456,8 +473,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@required="required"]
     [
         ./option[@value=""][.="[trans]Test&Me[/trans]"]
-        /following-sibling::option[@value="&a"][@selected="selected"][.="Choice&A"]
-        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+        /following-sibling::option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
     ]
     [count(./option)=3]
 '
@@ -480,8 +497,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@required="required"]
     [
         ./option[@value=""][.="[trans][/trans]"]
-        /following-sibling::option[@value="&a"][@selected="selected"][.="Choice&A"]
-        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+        /following-sibling::option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
     ]
     [count(./option)=3]
 '
@@ -503,15 +520,15 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/select
     [@name="na&me"]
-    [./optgroup[@label="Group&1"]
+    [./optgroup[@label="[trans]Group&1[/trans]"]
         [
-            ./option[@value="&a"][@selected="selected"][.="Choice&A"]
-            /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+            ./option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+            /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
         ]
         [count(./option)=2]
     ]
-    [./optgroup[@label="Group&2"]
-        [./option[@value="&c"][not(@selected)][.="Choice&C"]]
+    [./optgroup[@label="[trans]Group&2[/trans]"]
+        [./option[@value="&c"][not(@selected)][.="[trans]Choice&C[/trans]"]]
         [count(./option)=1]
     ]
     [count(./optgroup)=2]
@@ -533,8 +550,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@name="na&me[]"]
     [@multiple="multiple"]
     [
-        ./option[@value="&a"][@selected="selected"][.="Choice&A"]
-        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+        ./option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
     ]
     [count(./option)=2]
 '
@@ -556,8 +573,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@name="na&me[]"]
     [@multiple="multiple"]
     [
-        ./option[@value="&a"][@selected="selected"][.="Choice&A"]
-        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+        ./option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
     ]
     [count(./option)=2]
 '
@@ -579,8 +596,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@name="na&me[]"]
     [@multiple="multiple"]
     [
-        ./option[@value="&a"][@selected="selected"][.="Choice&A"]
-        /following-sibling::option[@value="&b"][not(@selected)][.="Choice&B"]
+        ./option[@value="&a"][@selected="selected"][.="[trans]Choice&A[/trans]"]
+        /following-sibling::option[@value="&b"][not(@selected)][.="[trans]Choice&B[/trans]"]
     ]
     [count(./option)=2]
 '
@@ -688,7 +705,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/select
     [@name="na&me"]
-    [./option[@value="AT"][@selected="selected"][.="Austria"]]
+    [./option[@value="AT"][@selected="selected"][.="[trans]Austria[/trans]"]]
     [count(./option)>200]
 '
         );
@@ -706,7 +723,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 '/select
     [@name="na&me"]
     [./option[@value=""][not(@selected)][.="[trans]Select&Country[/trans]"]]
-    [./option[@value="AT"][@selected="selected"][.="Austria"]]
+    [./option[@value="AT"][@selected="selected"][.="[trans]Austria[/trans]"]]
     [count(./option)>201]
 '
         );
@@ -1226,7 +1243,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/select
     [@name="na&me"]
-    [./option[@value="de"][@selected="selected"][.="German"]]
+    [./option[@value="de"][@selected="selected"][.="[trans]German[/trans]"]]
     [count(./option)>200]
 '
         );
@@ -1241,7 +1258,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $this->assertWidgetMatchesXpath($form->createView(), array(),
 '/select
     [@name="na&me"]
-    [./option[@value="de_AT"][@selected="selected"][.="German (Austria)"]]
+    [./option[@value="de_AT"][@selected="selected"][.="[trans]German (Austria)[/trans]"]]
     [count(./option)>200]
 '
         );
@@ -1512,6 +1529,37 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         );
     }
 
+    public function testTimeText()
+    {
+        $form = $this->factory->createNamed('time', 'na&me', '04:05:06', array(
+            'property_path' => 'name',
+            'input' => 'string',
+            'widget' => 'text',
+        ));
+
+        $this->assertWidgetMatchesXpath($form->createView(), array(),
+'/div
+    [
+        ./input
+            [@type="text"]
+            [@id="na&me_hour"]
+            [@name="na&me[hour]"]
+            [@value="04"]
+            [@size="1"]
+            [@required="required"]
+        /following-sibling::input
+            [@type="text"]
+            [@id="na&me_minute"]
+            [@name="na&me[minute]"]
+            [@value="05"]
+            [@size="1"]
+            [@required="required"]
+    ]
+    [count(./input)=2]
+'
+        );
+    }
+
     public function testTimeSingleText()
     {
         $form = $this->factory->createNamed('time', 'na&me', '04:05:06', array(
@@ -1524,7 +1572,7 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
 '/input
     [@type="text"]
     [@name="na&me"]
-    [@value="04:05:06"]
+    [@value="04:05:00"]
 '
         );
     }
@@ -1592,8 +1640,8 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
     [@name="na&me"]
     [@required="required"]
     [./optgroup
-        [@label="Europe"]
-        [./option[@value="Europe/Vienna"][@selected="selected"][.="Vienna"]]
+        [@label="[trans]Europe[/trans]"]
+        [./option[@value="Europe/Vienna"][@selected="selected"][.="[trans]Vienna[/trans]"]]
     ]
     [count(./optgroup)>10]
     [count(.//option)>200]
@@ -1644,9 +1692,10 @@ abstract class AbstractLayoutTest extends \PHPUnit_Framework_TestCase
         $html = $this->renderWidget($form);
 
         $this->assertMatchesXpath($html,
-'//script
-    [@id="na&me_items_prototype"]
-    [@type="text/html"]
+            '//div[@id="na&me_items"][@data-prototype]
+            |
+             //table[@id="na&me_items"][@data-prototype]
+
 '
         );
     }
